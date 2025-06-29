@@ -15,8 +15,10 @@ Run without arguments in fortress mode to open the interactive GUI:
 - Select wonder type from list
 - Choose size (small/medium/large)
 - Set material (default: GRANITE)
-- Toggle instant build option
-- Click "Build Wonder" to construct
+- Select build mode (Manual with cost / Instant no cost)
+- Click "Place Wonder" to enter placement mode
+- Click on map to select location
+- Click "Confirm" to place wonder or "Cancel" to choose different location
 
 ### Command Line Mode
 ```bash
@@ -125,8 +127,8 @@ wonders <type> <x> <y> [size] [material] [--instant]
 
 **Type:** `colossus`
 **Description:** Massive warrior statue with spear and shield
-**Default Size:** 7×5 base, 28 levels tall
-**Features:** Hollow legs, torso chamber, distinct head, left arm with shield, right arm with spear
+**Default Size:** 9×8 base platform, 31 levels tall
+**Features:** Base platform, hollow legs, torso chamber, distinct head, left arm with shield, right arm with spear
 **Customizable:** Material only
 
 ```
@@ -212,6 +214,28 @@ wonders <type> <x> <y> [size] [material] [--instant]
 █║█║█║█║█║█
 █║█║█║█║█║█
 ███████████
+```
+
+═══════════════════════════════════════════════════════════════
+                        TEMPLE OF ZEUS
+═══════════════════════════════════════════════════════════════
+
+**Type:** `zeus`
+**Description:** Grand Greek temple with columns and inner chamber
+**Default Size:** 34×66 footprint, 12 levels tall
+**Features:** Base platform, perimeter columns, roofed structure, inner chamber
+**Customizable:** Size, material
+
+```
+█████████████████
+█ █ █ █ █ █ █ █ █
+█               █
+█ █           █ █
+█               █
+█ █           █ █
+█               █
+█ █ █ █ █ █ █ █ █
+█████████████████
 ```
 
 ## Example Usage
