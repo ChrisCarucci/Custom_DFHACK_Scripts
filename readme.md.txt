@@ -108,13 +108,14 @@ wonders <type> <x> <y> [size] [material] [--instant]
 ═══════════════════════════════════════════════════════════════
 
 **Type:** `colossus`
-**Description:** Massive humanoid statue with raised arms
+**Description:** Massive humanoid statue with raised arms and head
 **Default Size:** 7×5 base, 28 levels tall
-**Features:** Hollow legs, torso chamber, raised arms
+**Features:** Hollow legs, torso chamber, distinct head, raised arms
 **Customizable:** Material only
 
 ```
 █   █
+ ███
 █████
 █████
 █████

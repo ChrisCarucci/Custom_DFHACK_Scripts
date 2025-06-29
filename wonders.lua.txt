@@ -181,10 +181,18 @@ local function buildColossus(x, y, mat, instant)
     setTile(x - 1, y - 2, z) -- Left leg
     setTile(x + 1, y - 2, z) -- Right leg
   end
-  for z = 20, 26 do
+  for z = 20, 24 do
     for dx = -1, 1 do
       for dy = -1, 1 do
-        setTile(x + dx, y + dy, z) -- Torso + Head
+        setTile(x + dx, y + dy, z) -- Torso
+      end
+    end
+  end
+  -- Head
+  for z = 25, 28 do
+    for dx = -1, 1 do
+      for dy = 0, 2 do
+        setTile(x + dx, y + dy, z)
       end
     end
   end
