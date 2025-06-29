@@ -317,4 +317,3 @@ else
 end
 
 print("✨ Constructed wonder: " .. wonder .. " at [" .. x .. ", " .. y .. "] using " .. mat_str .. (instant and " (instant build)" or " (scheduled jobs)"))
-
