@@ -1,0 +1,297 @@
+-- wonders.lua
+-- Usage: wonders <type> <x> <y> [size] [material] [--instant]
+-- Supports: giza, quetzalcoatl, lighthouse, stonehenge, greatwall,
+--           colossus, ziggurat, oracle, obelisk, library
+
+local args = {...}
+if #args < 3 then
+  qerror("Usage: wonders <type> <x> <y> [size/custom dims] [material] [--instant]")
+end
+
+local wonder = args[1]:lower()
+local x, y = tonumber(args[2]), tonumber(args[3])
+local size_opt, mat_str, instant = 'medium', 'GRANITE', false
+
+for i = 4, #args do
+  local arg = args[i]:lower()
+  if arg == '--instant' or arg == '--complete' then
+    instant = true
+  elseif not tonumber(arg) and dfhack.matinfo.find(arg) then
+    mat_str = arg
+  elseif arg == 'small' or arg == 'medium' or arg == 'large' then
+    size_opt = arg
+  end
+end
+
+local mat = dfhack.matinfo.find(mat_str)
+if not mat then qerror("Invalid material: " .. mat_str) end
+
+-- Default sizes
+local size_map = {
+  small = {l=10, w=10, h=7},
+  medium = {l=18, w=18, h=12},
+  large = {l=26, w=26, h=18},
+}
+
+local dims = size_map[size_opt] or {l=18, w=18, h=12}
+
+-- Tile placement
+local function setTile(x, y, z)
+  local block = dfhack.maps.ensureTileBlock(x, y, z)
+  block.designation[x%16][y%16].hidden = false
+  if instant then
+    block.tiletype[x%16][y%16] = df.tiletype.ConstructedFloor
+    block.material[x%16][y%16] = mat.index
+  else
+    dfhack.run_script('build', 'floor', x, y, z, mat_str)
+  end
+end
+
+-- ═══════════════════════════════════════════════════════════════
+--                          GIZA PYRAMID
+-- ═══════════════════════════════════════════════════════════════
+local function buildPyramid(x, y, dims, hollow)
+  for z = 0, dims.h - 1 do
+    local sz = dims.l - (z * 2)
+    for dx = 0, sz - 1 do
+      for dy = 0, sz - 1 do
+        local edge = dx == 0 or dy == 0 or dx == sz-1 or dy == sz-1
+        if not hollow or edge then
+          setTile(x - math.floor(sz/2) + dx, y - math.floor(sz/2) + dy, z)
+        end
+      end
+    end
+    -- Central ramp
+    setTile(x, y, z)
+  end
+end
+
+
+-- ═══════════════════════════════════════════════════════════════
+--                      QUETZALCOATL PYRAMID
+-- ═══════════════════════════════════════════════════════════════
+local function buildSteppedPyramid(x, y, dims)
+  for z = 0, dims.h - 1 do
+    local sz = dims.l - (z * 2)
+    for dx = 0, sz - 1 do
+      for dy = 0, sz - 1 do
+        setTile(x - math.floor(sz / 2) + dx, y - math.floor(sz / 2) + dy, z)
+      end
+    end
+  end
+  -- Temple cap floor
+  for dx = -1, 1 do
+    for dy = -1, 1 do
+      setTile(x + dx, y + dy, dims.h)
+    end
+  end
+end
+
+
+-- ═══════════════════════════════════════════════════════════════
+--                         LIGHTHOUSE
+-- ═══════════════════════════════════════════════════════════════
+local function buildLighthouse(x, y, dims)
+  local height = dims.h or 15
+  -- Base platform
+  for dx = -3, 3 do
+    for dy = -3, 3 do
+      setTile(x + dx, y + dy, 0)
+    end
+  end
+  -- Tower shaft
+  for z = 1, height - 3 do
+    for dx = -1, 1 do
+      for dy = -1, 1 do
+        local edge = dx == -1 or dx == 1 or dy == -1 or dy == 1
+        if edge then
+          setTile(x + dx, y + dy, z)
+        end
+      end
+    end
+  end
+  -- Beacon chamber
+  for z = height - 2, height do
+    for dx = -2, 2 do
+      for dy = -2, 2 do
+        setTile(x + dx, y + dy, z)
+      end
+    end
+  end
+end
+
+-- ═══════════════════════════════════════════════════════════════
+--                         STONEHENGE
+-- ═══════════════════════════════════════════════════════════════
+local function buildStonehenge(x, y)
+  local radius = 8
+  local stones = 12
+  for i = 0, stones - 1 do
+    local angle = (i * 2 * math.pi) / stones
+    local sx = x + math.floor(radius * math.cos(angle))
+    local sy = y + math.floor(radius * math.sin(angle))
+    -- Vertical stones
+    for z = 0, 4 do
+      setTile(sx, sy, z)
+      setTile(sx + 1, sy, z)
+    end
+    -- Lintels every other stone
+    if i % 2 == 0 and i < stones - 1 then
+      local next_angle = ((i + 1) * 2 * math.pi) / stones
+      local ex = x + math.floor(radius * math.cos(next_angle))
+      local ey = y + math.floor(radius * math.sin(next_angle))
+      local steps = math.max(math.abs(ex - sx), math.abs(ey - sy))
+      for step = 0, steps do
+        local lx = sx + math.floor((ex - sx) * step / steps)
+        local ly = sy + math.floor((ey - sy) * step / steps)
+        setTile(lx, ly, 5)
+      end
+    end
+  end
+end
+
+-- ═══════════════════════════════════════════════════════════════
+--                         GREAT WALL
+-- ═══════════════════════════════════════════════════════════════
+local function buildWall(x, y, dims)
+  local length = dims.l or 50
+  local height = dims.h or 8
+  for i = 0, length - 1 do
+    for z = 0, height - 1 do
+      setTile(x + i, y, z)
+      setTile(x + i, y + 1, z)
+      -- Watchtowers every 10 segments
+      if i % 10 == 0 then
+        for dz = 0, 3 do
+          for dy = -1, 2 do
+            setTile(x + i, y + dy, height + dz)
+          end
+        end
+      end
+    end
+  end
+end
+
+-- ═══════════════════════════════════════════════════════════════
+--                           COLOSSUS
+-- ═══════════════════════════════════════════════════════════════
+local function buildColossus(x, y, mat, instant)
+  local height = 20
+  for z = 0, height - 1 do
+    setTile(x - 1, y - 2, z) -- Left leg
+    setTile(x + 1, y - 2, z) -- Right leg
+  end
+  for z = 20, 26 do
+    for dx = -1, 1 do
+      for dy = -1, 1 do
+        setTile(x + dx, y + dy, z) -- Torso + Head
+      end
+    end
+  end
+  for z = 26, 28 do
+    setTile(x - 3, y + 1, z) -- Left arm raised
+    setTile(x + 3, y + 1, z) -- Right arm raised
+  end
+end
+
+-- ═══════════════════════════════════════════════════════════════
+--                           ZIGGURAT
+-- ═══════════════════════════════════════════════════════════════
+local function buildZiggurat(x, y, dims, mat, instant)
+  local base = dims.l
+  local steps = dims.h
+  for step = 0, steps - 1 do
+    local width = base - (step * 2)
+    for dx = 0, width - 1 do
+      for dy = 0, width - 1 do
+        setTile(x - math.floor(width / 2) + dx, y - math.floor(width / 2) + dy, step)
+      end
+    end
+  end
+  -- Central altar
+  for dx = -1, 1 do for dy = -1, 1 do setTile(x + dx, y + dy, steps) end end
+end
+
+-- ═══════════════════════════════════════════════════════════════
+--                        ORACLE TEMPLE
+-- ═══════════════════════════════════════════════════════════════
+local function buildOracleTemple(x, y, mat, instant)
+  local w = 10
+  local l = 16
+  for dx = -w, w, 4 do
+    for dy = -l, l, 4 do
+      for z = 0, 4 do
+        setTile(x + dx, y + dy, z) -- Pillars
+      end
+    end
+  end
+  -- Inner chamber
+  for dx = -2, 2 do
+    for dy = -2, 2 do
+      for z = 0, 2 do
+        setTile(x + dx, y + dy, z)
+      end
+    end
+  end
+end
+
+-- ═══════════════════════════════════════════════════════════════
+--                           OBELISKS
+-- ═══════════════════════════════════════════════════════════════
+local function buildObelisks(x, y, dims, mat, instant)
+  local h = dims.h or 10
+  local offsets = {{-5, -5}, {5, -5}, {-5, 5}, {5, 5}}
+  for _, offset in ipairs(offsets) do
+    for z = 0, h - 1 do
+      setTile(x + offset[1], y + offset[2], z)
+    end
+  end
+end
+
+-- ═══════════════════════════════════════════════════════════════
+--                        GREAT LIBRARY
+-- ═══════════════════════════════════════════════════════════════
+local function buildLibrary(x, y, mat, instant)
+  local w, l, h = 10, 16, 6
+  for z = 0, h - 1 do
+    for dx = -w, w do
+      for dy = -l, l do
+        if dx == -w or dx == w or dy == -l or dy == l then
+          setTile(x + dx, y + dy, z) -- Outer walls
+        elseif z % 2 == 0 and dx % 4 == 0 then
+          setTile(x + dx, y + dy, z) -- Shelves
+        end
+      end
+    end
+  end
+  -- Reading table on top
+  for dx = -1, 1 do for dy = -1, 1 do setTile(x+dx, y+dy, h) end end
+end
+
+-- Dispatcher
+if wonder == 'giza' then
+  buildPyramid(x, y, dims, true)
+elseif wonder == 'quetzalcoatl' then
+  buildSteppedPyramid(x, y, dims)
+elseif wonder == 'lighthouse' then
+  buildLighthouse(x, y, dims)
+elseif wonder == 'stonehenge' then
+  buildStonehenge(x, y)
+elseif wonder == 'greatwall' then
+  buildWall(x, y, dims)
+elseif wonder == 'colossus' then
+  buildColossus(x, y, mat, instant)
+elseif wonder == 'ziggurat' then
+  buildZiggurat(x, y, dims, mat, instant)
+elseif wonder == 'oracle' then
+  buildOracleTemple(x, y, mat, instant)
+elseif wonder == 'obelisk' or wonder == 'obelisks' then
+  buildObelisks(x, y, dims, mat, instant)
+elseif wonder == 'library' then
+  buildLibrary(x, y, mat, instant)
+else
+  qerror("Unknown wonder type: " .. wonder)
+end
+
+print("✨ Constructed wonder: " .. wonder .. " at [" .. x .. ", " .. y .. "] using " .. mat_str .. (instant and " (instant build)" or " (scheduled jobs)"))
+
