@@ -204,9 +204,17 @@ local function buildColossus(x, y, mat, instant)
     setTile(x - 3, y, z) -- Spear shaft
   end
   setTile(x - 3, y, 27) -- Spear tip
-  -- Right arm raised
-  for z = 25, 28 do
+  -- Right arm raised with shield
+  for z = 22, 28 do
     setTile(x + 2, y + 1, z) -- Right arm up
+  end
+  -- Shield
+  for z = 23, 26 do
+    for dx = 3, 4 do
+      for dy = 0, 1 do
+        setTile(x + dx, y + dy, z)
+      end
+    end
   end
 end
 

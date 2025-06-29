@@ -108,9 +108,9 @@ wonders <type> <x> <y> [size] [material] [--instant]
 ═══════════════════════════════════════════════════════════════
 
 **Type:** `colossus`
-**Description:** Massive humanoid statue with arms and spear
+**Description:** Massive warrior statue with spear and shield
 **Default Size:** 7×5 base, 28 levels tall
-**Features:** Hollow legs, torso chamber, distinct head, left arm with spear, raised right arm
+**Features:** Hollow legs, torso chamber, distinct head, left arm with spear, right arm with shield
 **Customizable:** Material only
 
 ```
