@@ -1,11 +1,119 @@
 -- wonders.lua
+-- Author: Chris Carucci (https://github.com/ChrisCarucci)
 -- Usage: wonders <type> <x> <y> [size] [material] [--instant]
+-- Or run without args for GUI in fortress mode
 -- Supports: giza, quetzalcoatl, lighthouse, stonehenge, greatwall,
 --           colossus, ziggurat, oracle, obelisk, library
 
+local gui = require('gui')
+local widgets = require('gui.widgets')
+local guidm = require('gui.dwarfmode')
+
 local args = {...}
+
+-- GUI Mode if no arguments provided
+if #args == 0 and dfhack.world.isFortressMode() then
+  local WonderGUI = defclass(WonderGUI, guidm.MenuOverlay)
+  
+  function WonderGUI:init()
+    self.wonder_types = {
+      {id='giza', name='Giza Pyramid', desc='Hollow Egyptian pyramid'},
+      {id='quetzalcoatl', name='Quetzalcoatl Pyramid', desc='Stepped Mesoamerican pyramid'},
+      {id='lighthouse', name='Lighthouse', desc='Tall beacon tower'},
+      {id='stonehenge', name='Stonehenge', desc='Circle of standing stones'},
+      {id='greatwall', name='Great Wall', desc='Fortified wall with towers'},
+      {id='colossus', name='Colossus', desc='Massive warrior statue'},
+      {id='ziggurat', name='Ziggurat', desc='Stepped pyramid with altar'},
+      {id='oracle', name='Oracle Temple', desc='Columned temple'},
+      {id='obelisk', name='Obelisks', desc='Four tall stone columns'},
+      {id='library', name='Great Library', desc='Multi-story library'}
+    }
+    
+    self:addviews{
+      widgets.Window{
+        frame={w=50, h=25},
+        frame_title='Wonder Builder',
+        subviews={
+          widgets.List{
+            view_id='wonder_list',
+            frame={t=1, l=1, r=1, b=8},
+            choices=self.wonder_types,
+            text_pen=COLOR_WHITE,
+            cursor_pen=COLOR_YELLOW,
+            on_submit=self:callback('selectWonder')
+          },
+          widgets.Label{frame={t=15, l=1}, text='Size:'},
+          widgets.CycleHotkeyLabel{
+            view_id='size_cycle',
+            frame={t=15, l=7, w=15},
+            options={'small', 'medium', 'large'},
+            initial_option=2
+          },
+          widgets.Label{frame={t=17, l=1}, text='Material:'},
+          widgets.EditField{
+            view_id='material_edit',
+            frame={t=17, l=11, w=15},
+            text='GRANITE'
+          },
+          widgets.ToggleHotkeyLabel{
+            view_id='instant_toggle',
+            frame={t=19, l=1},
+            label='Instant Build:',
+            initial_option=false
+          },
+          widgets.HotkeyLabel{
+            frame={t=22, l=1},
+            label='Build Wonder',
+            key='SELECT',
+            on_activate=self:callback('buildWonder')
+          },
+          widgets.HotkeyLabel{
+            frame={t=22, l=20},
+            label='Cancel',
+            key='LEAVESCREEN',
+            on_activate=self:callback('dismiss')
+          }
+        }
+      }
+    }
+  end
+  
+  function WonderGUI:selectWonder(idx, choice)
+    self.selected_wonder = choice.id
+  end
+  
+  function WonderGUI:buildWonder()
+    if not self.selected_wonder then
+      dfhack.printerr('Please select a wonder type')
+      return
+    end
+    
+    local cursor = guidm.getCursorPos()
+    if not cursor then
+      dfhack.printerr('Please position cursor on target location')
+      return
+    end
+    
+    local size = self.subviews.size_cycle:getOptionValue()
+    local material = self.subviews.material_edit.text
+    local instant = self.subviews.instant_toggle:getOptionValue()
+    
+    self:dismiss()
+    
+    -- Build the wonder
+    local build_args = {self.selected_wonder, tostring(cursor.x), tostring(cursor.y), size, material}
+    if instant then table.insert(build_args, '--instant') end
+    
+    dfhack.run_script('wonders', table.unpack(build_args))
+  end
+  
+  WonderGUI():show()
+  return
+end
+
+-- Command line mode
 if #args < 3 then
-  qerror("Usage: wonders <type> <x> <y> [size/custom dims] [material] [--instant]")
+  qerror("Usage: wonders <type> <x> <y> [size/custom dims] [material] [--instant]\nOr run without args for GUI in fortress mode")
 end
 
 local wonder = args[1]:lower()

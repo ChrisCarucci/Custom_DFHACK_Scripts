@@ -5,6 +5,20 @@ Build magnificent ancient wonders in Dwarf Fortress using the DFHack scripting s
 **File:** `wonders.lua`
 
 ## Usage
+
+### GUI Mode (Fortress Mode)
+```bash
+wonders
+```
+Run without arguments in fortress mode to open the interactive GUI:
+- Position cursor on target location
+- Select wonder type from list
+- Choose size (small/medium/large)
+- Set material (default: GRANITE)
+- Toggle instant build option
+- Click "Build Wonder" to construct
+
+### Command Line Mode
 ```bash
 wonders <type> <x> <y> [size] [material] [--instant]
 ```
@@ -202,6 +216,13 @@ wonders <type> <x> <y> [size] [material] [--instant]
 
 ## Example Usage
 
+### GUI Mode
+```bash
+wonders
+```
+*Opens interactive GUI for easy wonder placement*
+
+### Command Line Mode
 ```bash
 wonders giza 100 150 large LIMESTONE
 wonders lighthouse 80 80 medium MARBLE --instant
@@ -226,3 +247,11 @@ wonders colossus 50 75 OBSIDIAN
 - Without `--instant`, creates construction jobs for dwarves
 - Builds on surface tiles only
 - Some wonders have hollow interiors for functionality
+
+## Credits
+
+**Author:** Chris Carucci
+- Script development and wonder implementations
+- Interactive GUI design for fortress mode
+- ASCII art diagrams and documentation
+- GitHub: https://github.com/ChrisCarucci
